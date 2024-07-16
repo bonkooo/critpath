@@ -59,9 +59,9 @@ void Graph::calculateEst()
 }
 
 void Graph::calculateLst() {
-	std::queue<int> q;
-	std::unordered_map<int, int> outDegree;
-	std::vector<int> TopoOrder;
+	queue<int> q;
+	unordered_map<int, int> outDegree;
+	vector<int> TopoOrder;
 
 	// Inicijalizuj izlazne stepene
 	for (const auto& taskObj : tasks) {
@@ -92,7 +92,7 @@ void Graph::calculateLst() {
 	// izracunaj vrednosti za lst
 	for (int id : TopoOrder) {
 		for (int prereq : tasks[id].prereqs) {
-			tasks[prereq].lst = std::min(tasks[prereq].lst, tasks[id].lst - tasks[prereq].duration);
+			tasks[prereq].lst = min(tasks[prereq].lst, tasks[id].lst - tasks[prereq].duration);
 		}
 	}
 
