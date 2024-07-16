@@ -47,37 +47,89 @@ void Graph::calculateEst()
 		int curr = q.front();
 		q.pop();
 
-		for (int neighbor: adjList[curr]) {
+		for (int neighbor : adjList[curr]) {
 			inDegree[neighbor]--; //smanji ulazni stepen za sve susedne cvorove i proveri da li je nekom 0
 			if (inDegree[neighbor] == 0) {
 				q.push(neighbor);
 			}
-			//updateuj est za susede 
+			//updateuj est za sledbenike
 			tasks[neighbor].est = max(tasks[neighbor].est, tasks[curr].est + tasks[curr].duration);
 		}
 	}
 }
 
-void Graph::calculateLst()
-{
-	queue<int> q;
-	unordered_map<int, int> outDegree;
-	vector<int> TopoOrder;
+void Graph::calculateLst() {
+	std::queue<int> q;
+	std::unordered_map<int, int> outDegree;
+	std::vector<int> TopoOrder;
 
+	// Inicijalizuj izlazne stepene
 	for (const auto& taskObj : tasks) {
 		int id = taskObj.first;
-		const Task& task = taskObj.second;
 		outDegree[id] = adjList[id].size();
 		if (outDegree[id] == 0) {
-			tasks[id].lst = tasks[id].est;
+			q.push(id);
+			tasks[id].lst = tasks[id].est;  //inicijalno LST = EST
+		}
+	}
+
+	// odredi topoloski poredak
+	while (!q.empty()) {
+		int curr = q.front();
+		q.pop();
+		TopoOrder.push_back(curr);
+		for (int neighbor : adjList[curr]) {
+			outDegree[neighbor]--;
+			if (outDegree[neighbor] == 0) {
+				q.push(neighbor);
+			}
+		}
+	}
+
+	// okreni topoloski poredak
+	std::reverse(TopoOrder.begin(), TopoOrder.end());
+
+	// izracunaj vrednosti za lst
+	for (int id : TopoOrder) {
+		for (int prereq : tasks[id].prereqs) {
+			tasks[prereq].lst = std::min(tasks[prereq].lst, tasks[id].lst - tasks[prereq].duration);
+		}
+	}
+
+	// cvorovi sa ulaznim stepenom 0
+	for (auto& taskObj : tasks) {
+		if (taskObj.second.prereqs.empty()) {
+			taskObj.second.lst = taskObj.second.est; 
 		}
 	}
 }
 
+
+
 void Graph::printTasks()
 {
+	cout << "Aktivnosti i njihovi preduslovi: \n";
+	for (const auto& taskObj : tasks) {
+		cout << "ID: " << taskObj.first << " Trajanje aktivnosti: " << taskObj.second.duration << " \n";
+		cout << "Preduslovi: ";
+		for (int prereq : taskObj.second.prereqs) {
+			cout << prereq << " ";
+		}
+		cout << "\n";
+	}
 }
 
-void Graph::printResults()
-{
+void Graph::printResults() {
+	cout << "Aktivnost\tEST\tLST\tDozv. kasnjenje\n";
+	for (const auto& taskObj : tasks) {
+		std::cout << taskObj.first << "\t" << taskObj.second.est << "\t" << taskObj.second.lst << "\t" << taskObj.second.lst - taskObj.second.est << endl;
+	}
+
+	std::cout << "Kriticni put: ";
+	for (const auto& taskObj : tasks) {
+		if (taskObj.second.est == taskObj.second.lst) {
+			cout << taskObj.first << " ";
+		}
+	}
+	cout << endl;
 }
